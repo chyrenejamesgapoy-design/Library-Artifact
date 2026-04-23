@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LIBRARY ARTIFACT SYSTEM | RPG v2.1</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* Base Glassmorphism */
+        .glass {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(15px) saturate(150%);
+            -webkit-backdrop-filter: blur(15px) saturate(150%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+        }
+
+        /* Metallic Chrome Text for Stats */
+        .massive-chrome {
+            font-size: 3.5rem;
+            font-weight: 900;
+            background: linear-gradient(180deg, #FFFFFF 30%, #9ca3af 60%, #FFFFFF 85%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 10px rgba(255,255,255,0.3));
+            line-height: 1;
+        }
+
+        /* Card Container & Flip Logic */
+        .card-container {
+            perspective: 1200px;
+            min-height: 580px;
+            position: relative;
+        }
+
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+            transform-style: preserve-3d;
+        }
+
+        .card-inner.is-flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-front, .card-back {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border-radius: 2.5rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-back {
+            transform: rotateY(180deg);
+            background: linear-gradient(180deg, #0a0a14 0%, #050508 100%) !important;
+        }
+
+        /* Rarity Visual Polish */
+        .common-border { border-top: 3px solid #9ca3af; }
+        .rare-border { border-top: 3px solid #6366f1; box-shadow: inset 0 20px 40px rgba(99, 102, 241, 0.1); }
+        .epic-border { border-top: 3px solid #a855f7; box-shadow: inset 0 20px 40px rgba(168, 85, 247, 0.15); }
+        .legendary-border { border-top: 3px solid #f59e0b; box-shadow: inset 0 20px 40px rgba(245, 158, 11, 0.2); }
+        
+        .artifact-card-wrap::after {
+            content: '';
+            position: absolute;
+            inset: -10px;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* --- FORGING ENGINE ANIMATIONS --- */
+        .forge-hammer-asset {
+            font-size: 5rem;
+            filter: drop-shadow(0 0 20px rgba(99, 102, 241, 0.8));
+            transform-origin: bottom right;
+            animation: hammerStrike 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
+        }
+
+        @keyframes hammerStrike {
+            0%, 100% { transform: rotate(-45deg) translate(0, 0); }
+            30% { transform: rotate(10deg) translate(-20px, 40px); }
+            45% { transform: rotate(-5deg) translate(-10px, 15px); }
+        }
+
+        .forging-plate {
+            width: 160px;
+            height: 240px;
+            background: linear-gradient(135deg, #1a1a2e 0%, #050508 100%);
+            border: 2px solid rgba(99, 102, 241, 0.4);
+            border-radius: 2rem;
+            position: relative;
+            overflow: hidden;
+            animation: metalHeatPulse 1.6s ease-in-out infinite;
+        }
+
+        @keyframes metalHeatPulse {
+            0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.2); border-color: rgba(99, 102, 241, 0.4); }
+            50% { box-shadow: 0 0 50px rgba(168, 85, 247, 0.6); border-color: rgba(168, 85, 247, 1); }
+        }
+
+        .forging-plate::before, .forging-plate::after {
+            content: '';
+            position: absolute;
+            width: 4px; height: 4px;
+            background: #fbbf24;
+            border-radius: 50%;
+            opacity: 0;
+        }
+
+        .forging-plate::before { animation: sparkLeft 0.8s infinite; }
+        .forging-plate::after { animation: sparkRight 0.8s infinite 0.1s; }
+
+        @keyframes sparkLeft {
+            0% { transform: translate(80px, 120px); opacity: 1; }
+            100% { transform: translate(-30px, -50px); opacity: 0; }
+        }
+        @keyframes sparkRight {
+            0% { transform: translate(80px, 120px); opacity: 1; }
+            100% { transform: translate(180px, -30px); opacity: 0; }
+        }
+    </style>
+</head>
+
+<body class="p-4 md:p-8 lg:p-12 bg-[#050508] text-white">
+    <div id="vanta-canvas" class="fixed inset-0 z-[-2]"></div>
+    <div id="particles-js" class="fixed inset-0 z-[-1]"></div>
+
+      <div id="limitModal" class="hidden fixed inset-0 z-[1200] bg-black/90 flex items-center justify-center p-6 backdrop-blur-2xl">
+    <div class="glass p-10 rounded-[2.5rem] border-t-4 border-red-500 text-center max-w-sm w-full animate__animated animate__zoomIn">
+        <div class="text-5xl mb-4">🚫</div>
+        <h2 class="text-2xl font-black text-white italic uppercase mb-2">Slots are full</h2>
+        <p class="text-gray-400 text-xs mb-8 uppercase tracking-widest">Upgrade your vault or dismantle artifacts to continue forging.</p>
+        <button onclick="document.getElementById('limitModal').classList.add('hidden')" class="w-full py-4 bg-white text-black font-black rounded-2xl hover:scale-105 transition-transform">UNDERSTOOD</button>
+    </div>
+</div>
+
+    <div id="summoningOverlay" class="hidden fixed inset-0 z-[1000] bg-black/95 backdrop-blur-xl flex flex-col items-center justify-center overflow-hidden">
+        <div class="absolute w-[500px] h-[500px] bg-indigo-600/20 rounded-full blur-[120px] animate-pulse"></div>
+        <div class="relative flex flex-col items-center justify-center mb-12">
+            <div class="forge-hammer-asset absolute -top-20 -right-16 z-20">⚒️</div>
+            <div class="forging-plate flex items-center justify-center">
+                <div class="massive-chrome !text-4xl opacity-20 italic">FORGE</div>
+            </div>
+        </div>
+        <div class="text-center z-10">
+            <h2 class="text-indigo-400 font-black tracking-[0.5em] uppercase text-2xl mb-2 animate-pulse">Forging Artifact</h2>
+            <div class="relative flex items-center justify-center mt-6">
+                <svg class="w-24 h-24 transform -rotate-90">
+                    <circle cx="48" cy="48" r="40" stroke="currentColor" stroke-width="4" fill="transparent" class="text-white/10" />
+                    <circle id="summonProgress" cx="48" cy="48" r="40" stroke="currentColor" stroke-width="4" fill="transparent" 
+                            stroke-dasharray="251" stroke-dashoffset="0"
+                            class="text-indigo-500 transition-all duration-1000 ease-linear" />
+                </svg>
+                <span id="summonTimer" class="absolute text-2xl font-black text-white italic">10</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="forgeOverlay" class="hidden fixed inset-0 z-[600] bg-black/80 backdrop-blur-md flex flex-col items-center justify-center">
+        <div class="w-20 h-20 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p class="text-indigo-500 font-black tracking-widest animate-pulse">UPGRADING ARTIFACT...</p>
+    </div>
+
+    <div class="max-w-screen-2xl mx-auto">
+        <nav class="flex justify-between items-center mb-10 glass px-8 py-7 relative z-[100] rounded-3xl">
+            <div>
+                <h1 class="text-2xl font-black text-indigo-500 tracking-tighter leading-none">LIBRARY ARTIFACT</h1>
+                <p class="text-[10px] text-gray-500 tracking-[0.3em] font-bold">VERSION 2.1</p>
+            </div>
+            <div class="hidden md:flex items-center gap-8">
+                <div class="flex flex-col items-end">
+                    <span class="text-[10px] text-gray-500 font-bold tracking-widest uppercase">Vault Credit</span>
+                    <span class="text-2xl font-black text-white">
+                        <span id="gold-count">{{ gold }}</span> <span class="text-yellow-500 text-sm">AU</span>
+                    </span>
+                </div>
+                <div class="flex flex-col items-end border-l border-white/10 pl-8">
+                    <span class="text-[10px] text-gray-500 font-bold tracking-widest uppercase">Vault Level</span>
+                    <span class="text-xl font-black text-indigo-400 italic">LVL {{ vault_lvl }}</span>
+                </div>
+                <a href="/logout" class="bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white px-6 py-3 rounded-2xl text-xs font-black transition-all">LOG OUT</a>
+            </div>
+        </nav>
+
+        <div class="grid grid-cols-12 gap-8 lg:gap-12">
+            <div class="col-span-12 lg:col-span-4 space-y-8">
+                <div class="glass p-10 rounded-[2.5rem]">
+                    <div class="mb-8">
+                        <h3 class="text-indigo-400 text-xs font-black uppercase tracking-[0.2em]">Forge Portal</h3>
+                        <p class="text-gray-500 text-[10px] uppercase font-bold tracking-widest">Cap: {{ items|length }}/{{ limit }}</p>
+                    </div>
+                    <form id="forgeForm" action="/forge" method="POST" class="space-y-5">
+                        <input name="name" placeholder="Enter Name..." required class="w-full bg-white/5 border border-white/10 p-5 rounded-3xl text-white focus:border-indigo-500 outline-none transition-all">
+                        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 py-6 rounded-3xl font-black text-white transition-all shadow-lg shadow-indigo-600/20">SUMMON ASSET</button>
+                    </form>
+                    <div class="mt-10 pt-8 border-t border-white/5 space-y-4">
+                        <button type="button" id="mineBtn" onclick="handleCollectGold()" class="w-full border-2 border-yellow-500/30 py-5 rounded-3xl font-black text-yellow-500 transition-all hover:bg-yellow-500 hover:text-black uppercase text-xs tracking-widest">
+                            <span id="btnIcon">⛏️</span> <span id="btnText">COLLECT {{ next_reward }} AU</span>
+                        </button>
+                        <form action="/upgrade_vault" method="POST">
+                            <button type="submit" class="w-full bg-white/5 border border-white/10 py-4 rounded-2xl text-[10px] font-black text-indigo-400 uppercase tracking-widest" {% if gold < vault_cost or vault_lvl >= 50 %} disabled {% endif %}>
+                                {% if vault_lvl >= 50 %} MAX LEVEL {% else %} UPGRADE VAULT ({{ vault_cost }} AU) {% endif %}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="glass p-10 border-l-[6px] border-red-500 rounded-[2.5rem]">
+                    <div class="arena-section" style="display: flex; justify-content: center; align-items: center; width: 100%;">
+                        <a href="{{ url_for('battle') }}" class="engage-btn" style="
+                            background-color: #ffffff; 
+                            color: #000000; 
+                            padding: 15px 40px; 
+                            border-radius: 50px; 
+                            text-decoration: none; 
+                            font-weight: bold;
+                            display: block; 
+                            text-align: center;
+                            width: 100%;
+                            max-width: 250px;
+                            text-transform: uppercase;
+                            transition: transform 0.2s ease;">
+                            Enter Arena
+                        </a>
+                    </div>
+                    <form action="/battle" method="POST" class="space-y-5">
+                    </form>
+                </div>
+            </div>
+
+            <div class="col-span-12 lg:col-span-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-10">
+                    {% for item in items %}
+                    <div class="card-container artifact-card-wrap">
+                        <div class="card-inner" id="inner-{{item.id}}">
+                            <div class="card-front glass p-8 cursor-pointer overflow-hidden {{ item.rarity.lower() }}-border" onclick="flipCard('{{ item.id }}')">
+                                <div class="flex justify-between items-start mb-8 relative z-10">
+                                    <div class="p-1 bg-gradient-to-br from-white/10 to-transparent rounded-3xl border border-white/10">
+                                        <img src="{{ item.profile_img }}" class="w-20 h-20 rounded-[1.4rem] object-cover">
+                                    </div>
+                                    <form action="/favorite/{{item.id}}" method="POST" onclick="event.stopPropagation()">
+                                        <button type="submit" class="p-4 bg-white/5 border border-white/10 rounded-2xl {% if item.is_favorite %}text-red-500 shadow-[0_0_20px_rgba(239,68,68,0.3)]{% else %}text-white/20{% endif %}">❤️</button>
+                                    </form>
+                                </div>
+                                <div class="mb-4">
+                                    <span class="text-[10px] font-black uppercase tracking-tighter px-3 py-1 rounded-full border border-white/10 bg-black/20 text-white/70">+ {{ item.role.upper() }}</span>
+                                </div>
+                                <h2 class="text-4xl font-black italic uppercase text-white tracking-tighter leading-tight mb-1">{{ item.name }}</h2>
+                                <span class="text-[10px] text-indigo-400 font-bold tracking-[0.3em] uppercase mb-12 block">{{ item.rarity }}</span>
+                                <div class="mt-auto space-y-6">
+                                    <div class="flex justify-between items-end">
+                                        <div>
+                                            <span class="text-[8px] text-gray-500 font-black uppercase tracking-widest block mb-1">Power Rating</span>
+                                            <span class="massive-chrome">{{ item.power }}</span>
+                                        </div>
+                                        <div class="text-right">
+                                            <span class="text-[8px] text-gray-500 font-black uppercase tracking-widest block">Level</span>
+                                            <span class="text-3xl font-black italic text-indigo-500">{{ item.level }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="w-full h-3 bg-black/60 rounded-full border border-white/5 p-[2px] overflow-hidden">
+                                        <div class="h-full bg-gradient-to-r from-indigo-600 to-cyan-400 rounded-full" style="width: {{ (item.level / 50) * 100 }}%"></div>
+                                    </div>
+                                    {% if item.level < 50 %}
+                                    <form action="/upgrade/{{item.id}}" method="POST" onclick="event.stopPropagation()">
+                                        {% set up_cost = 250 * (2**(item.level-1)) %}
+                                        <button type="submit" class="w-full bg-white/5 border border-white/10 py-5 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-white hover:text-black transition-all" {% if gold < up_cost %} disabled {% endif %}>
+                                            UPGRADE: {{ up_cost }} AU
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="card-back glass p-10 cursor-pointer" onclick="flipCard('{{ item.id }}')">
+                                <div class="flex justify-between items-center mb-6">
+                                    <h3 class="text-indigo-400 font-black uppercase text-xs tracking-widest">System Logs</h3>
+                                    <button type="button" onclick="event.stopPropagation(); triggerDismantle('{{ item.id }}', '{{ item.name }}')" class="text-red-500 p-2 bg-red-500/10 rounded-lg hover:bg-red-500 transition-all">🗑️</button>
+                                </div>
+                                <div class="bg-black/40 rounded-2xl p-6 border border-white/5 mb-8 flex-grow">
+                                    <p class="text-xs leading-relaxed text-gray-400 italic">{{ item.bio }}</p>
+                                </div>
+                                <div class="space-y-4">
+                                    <div class="flex justify-between border-b border-white/5 pb-2"><span class="text-gray-500 text-[10px] font-bold uppercase">Class</span><span class="text-white text-[10px] font-black">{{ item.role }}</span></div>
+                                    <div class="flex justify-between border-b border-white/5 pb-2"><span class="text-gray-500 text-[10px] font-bold uppercase">Reset</span><span class="text-indigo-400 text-[10px] font-black"><span id="timer-{{item.id}}">10</span>s</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="dismantleModal" class="hidden fixed inset-0 z-[2000] flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm"></div>
+        <div class="relative glass bg-[#0a0a0f]/90 border-t-4 border-red-500 w-full max-w-md p-10 rounded-[3rem]">
+            <div class="text-center space-y-8">
+                <h2 class="text-2xl font-black text-white uppercase tracking-tighter">Dismantle <span id="targetName" class="text-red-500">Asset</span>?</h2>
+                <div class="flex gap-4">
+                    <button onclick="closeDismantle()" class="flex-1 py-4 rounded-2xl bg-white/5 text-white font-black text-xs uppercase border border-white/10">Abort</button>
+                    <form id="confirmDismantleForm" method="POST" class="flex-1">
+                        <button type="button" onclick="executeDismantle()" class="w-full py-4 rounded-2xl bg-red-600 text-white font-black text-xs uppercase shadow-lg shadow-red-600/30">Confirm</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="capacityAlert" class="hidden fixed top-10 left-1/2 -translate-x-1/2 z-[3000] flex items-center gap-4 px-6 py-4 glass border-t-2 border-red-500 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] animate__animated">
+        <div class="flex items-center justify-center w-10 h-10 rounded-full bg-red-500/20 text-red-500 shadow-[0_0_15px_rgba(239,68,68,0.4)]">
+            <span class="font-black">!</span>
+        </div>
+        <div>
+            <h4 class="text-white font-black text-xs uppercase tracking-widest">System Warning</h4>
+            <p class="text-gray-400 text-[10px] font-bold uppercase">Forge Capacity is Full</p>
+        </div>
+    </div>
+
+    <svg width="0" height="0" style="position: absolute;">
+      <filter id="jaggedLightning">
+        <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="5" result="noise" />
+        <feDisplacementMap in="SourceGraphic" in2="noise" scale="35" />
+      </filter>
+    </svg>
+
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r121/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.halo.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    
+</body>
+</html>

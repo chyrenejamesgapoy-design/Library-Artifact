@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+    {% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <div id="alertBox" class="mb-6 p-4 bg-red-500/10 border border-red-500 rounded-lg text-red-500 text-xs heading-font tracking-widest text-center animate-pulse">
+        {{ messages[0] }}
+    </div>
+    <script>
+        // Auto-hide the alert after 4 seconds
+        setTimeout(() => {
+            document.getElementById('alertBox').style.display = 'none';
+        }, 4000);
+    </script>
+  {% endif %}
+{% endwith %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artifact Library | Secure Entry</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="{{ url_for('static', filename='sound.js') }}"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap');
+        
+        :root {
+            --bg-dark: #0a0a0b;
+            --panel-bg: #111114;
+            --accent-green: #4ade80;
+            --accent-blue: #6366f1;
+            --border: #27272a;
+        }
+
+        body { 
+            background-color: var(--bg-dark); 
+            font-family: 'Rajdhani', sans-serif;
+            color: #d1d1d6;
+            overflow-x: hidden;
+        }
+
+        .heading-font { font-family: 'Orbitron', sans-serif; }
+
+        .grid-bg {
+            position: fixed;
+            inset: 0;
+            background-image: linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px);
+            background-size: 50px 50px;
+            mask-image: radial-gradient(circle at center, black, transparent 80%);
+            opacity: 0.15;
+            z-index: -1;
+        }
+
+        #loadingScreen { transition: opacity 0.5s ease-in-out; }
+
+        .cyber-input {
+            background: #000000;
+            border: 1px solid var(--border);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .cyber-input:focus {
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.2);
+            outline: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div class="grid-bg"></div>
+
+    <div id="loadingScreen" class="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center hidden">
+        <div class="relative w-40 h-40 flex items-center justify-center">
+            <div class="absolute inset-0 border-4 border-white/5 rounded-full"></div>
+            <div class="absolute inset-0 border-t-4 border-green-400 rounded-full animate-spin"></div>
+            <div class="heading-font text-[10px] tracking-widest text-white">SYNCING_CORE</div>
+        </div>
+        <div class="mt-8 text-center">
+            <p id="loadingText" class="heading-font text-xs text-gray-500 uppercase tracking-[0.5em] mb-4">Initializing...</p>
+            <div class="w-64 h-1 bg-white/5 rounded-full overflow-hidden">
+                <div id="progressBar" class="h-full bg-green-400 w-0 transition-all duration-[6000ms] ease-linear"></div>
+            </div>
+        </div>
+    </div>
+
+    <main class="w-full max-w-md">
+        <div class="bg-[#111114] border border-[#27272a] rounded-xl p-8 shadow-2xl relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-600 to-green-400"></div>
+            
+            <header class="text-center mb-10">
+                <h1 class="heading-font text-2xl font-black text-white tracking-widest uppercase mb-1">
+                    Artifact Library
+                </h1>
+                <div class="flex items-center justify-center gap-2">
+                    <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                    <p class="text-[10px] heading-font text-gray-500 uppercase tracking-[0.3em]">System Online</p>
+                </div>
+            </header>
+
+            <form id="loginForm" action="/login" method="POST" class="space-y-6">
+                <div class="space-y-2">
+                    <label class="block text-[10px] heading-font uppercase text-gray-500 tracking-widest">Operator Identity</label>
+                    <input type="text" name="username" required placeholder="USERNAME"
+                        class="cyber-input w-full p-4 rounded-lg text-white font-semibold">
+                </div>
+
+                <div class="space-y-2">
+                    <label class="block text-[10px] heading-font uppercase text-gray-500 tracking-widest">Access Protocol</label>
+                    <input type="password" name="password" required placeholder="••••••••"
+                        class="cyber-input w-full p-4 rounded-lg text-white font-semibold">
+                </div>
+
+                <button type="submit" 
+                    class="w-full py-4 bg-white hover:bg-green-400 text-black heading-font text-sm font-black uppercase rounded-lg transition-all duration-300 transform active:scale-95 tracking-[0.2em] shadow-lg">
+                    Establish Link
+                </button>
+            </form>
+
+            <div class="mt-8 pt-6 border-t border-white/5 text-center">
+                <p class="text-[10px] heading-font text-gray-500 uppercase tracking-[0.2em] mb-4">
+                    New Operator? 
+                    <a href="/register" class="text-indigo-400 hover:text-green-400 transition-colors duration-300 ml-1">
+                        Initialize Here
+                    </a>
+                </p>
+                <p class="text-[9px] heading-font text-gray-700 uppercase tracking-widest">
+                    Security Level 4 Clearances Required
+                </p>
+            </div>
+        </div> 
+    </main>
+
+    <script>
+        const form = document.getElementById('loginForm');
+        const loader = document.getElementById('loadingScreen');
+        const bar = document.getElementById('progressBar');
+        const text = document.getElementById('loadingText');
+
+        const phrases = ["Validating Hash...", "Mapping Vault...", "Syncing Artifacts...", "Access Granted"];
+
+        window.addEventListener('click', () => {
+            if (window.initAudio) initAudio();
+        }, { once: true });
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            if (window.playLoginSequence) playLoginSequence();
+
+            loader.classList.remove('hidden');
+            setTimeout(() => bar.style.width = '100%', 50);
+
+            let i = 0;
+            const textTimer = setInterval(() => {
+                if (i < phrases.length) text.innerText = phrases[i++];
+            }, 1400);
+
+            setTimeout(() => {
+                clearInterval(textTimer);
+                form.submit();
+            }, 6000);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arena - Combat Protocol</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='battle.css') }}">
+</head>
+<body>
+
+    <div class="card-rain-container">
+        <div class="character-projection">
+            <div class="holo-scanline"></div>
+        </div>
+        <div id="cardFactory"></div>
+    </div>
+
+    <div class="arena-dashboard glass">
+        
+        <div class="rank-display">
+            <div id="rankName" class="rank-title uppercase italic">Warrior</div>
+            <div id="trophyValue" class="trophy-count text-yellow-500 font-black">{{ trophies }} TROPHIES</div>
+        </div>
+
+        <div class="mode-selection-wrapper">
+            <div class="mode-card" onclick="selectMode(this, '1v1', false)">
+                <span class="mode-icon">⚔️</span>
+                <div class="mode-label">1V1</div>
+            </div>
+
+            <div class="mode-card" onclick="selectMode(this, 'classic', false)">
+                <span class="mode-icon">📜</span>
+                <div class="mode-label">CLASSIC</div>
+            </div>
+
+            <div class="mode-card ranked active" onclick="selectMode(this, 'ranked', true)">
+                <span class="mode-icon">💎</span>
+                <div class="mode-label">RANKED</div>
+                <div class="trophy-status-dot"></div>
+            </div>
+        </div>
+
+        <div id="battleContainer" class="battle-container legendary-border bg-black/40 rounded-2xl py-8 my-4 border border-white/5">
+            <div id="statusText" class="searching-text text-xs tracking-[0.3em] font-black">RANKED PROTOCOL READY</div>
+        </div>
+
+        <button id="arenaBtn" class="btn-enter-arena w-full py-5 rounded-2xl font-black uppercase tracking-widest transition-all" onclick="startBattle()">
+            ENGAGE BATTLE
+        </button>
+        
+        <a href="{{ url_for('dashboard') }}" class="back-link block text-center mt-6 text-[10px] text-gray-500 uppercase font-bold tracking-widest hover:text-white transition-all">Return to Vault</a>
+    
+    </div> <svg width="0" height="0" style="position: absolute;">
+      <filter id="jaggedLightning">
+        <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="5" result="noise" />
+        <feDisplacementMap in="SourceGraphic" in2="noise" scale="35" />
+      </filter>
+    </svg>
+
+    <script src="{{ url_for('static', filename='battle.js') }}"></script>
+    
+    <script>
+        const factory = document.getElementById('cardFactory');
+        for (let i = 0; i < 15; i++) {
+            const card = document.createElement('div');
+            card.className = 'divine-falling-card';
+            card.innerHTML = '<div class="card-glow"></div>';
+            card.style.left = Math.random() * 100 + '%';
+            card.style.animationDelay = Math.random() * 8 + 's';
+            card.style.animationDuration = (Math.random() * 4 + 5) + 's';
+            factory.appendChild(card);
+        }
+    </script>
+</body>
+</html>

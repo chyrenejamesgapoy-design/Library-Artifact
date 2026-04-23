@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artifact Library | Initialize Operator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Rajdhani:wght@400;600;700&display=swap');
+        body { background-color: #0a0a0b; font-family: 'Rajdhani', sans-serif; color: #d1d1d6; }
+        .heading-font { font-family: 'Orbitron', sans-serif; }
+        .cyber-input { background: #000000; border: 1px solid #27272a; transition: all 0.3s; }
+        .cyber-input:focus { border-color: #6366f1; box-shadow: 0 0 15px rgba(99, 102, 241, 0.2); outline: none; }
+    </style>
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <div id="alertBox" class="mb-6 p-4 bg-red-500/10 border border-red-500 rounded-lg text-red-500 text-xs heading-font tracking-widest text-center animate-pulse">
+        {{ messages[0] }}
+    </div>
+    <script>
+        // Auto-hide the alert after 4 seconds
+        setTimeout(() => {
+            document.getElementById('alertBox').style.display = 'none';
+        }, 4000);
+    </script>
+  {% endif %}
+{% endwith %}
+
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+    <main class="w-full max-w-md">
+        <div class="bg-[#111114] border border-[#27272a] rounded-xl p-8 shadow-2xl relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-400 to-blue-600"></div>
+            
+            <header class="text-center mb-8">
+                <h1 class="heading-font text-2xl font-black text-white tracking-widest uppercase mb-1">New Operator</h1>
+                <p class="text-[10px] heading-font text-gray-500 uppercase tracking-[0.3em]">Initialize Security Credentials</p>
+            </header>
+
+            <form action="/register" method="POST" class="space-y-6">
+                <div class="space-y-2">
+                    <label class="block text-[10px] heading-font uppercase text-gray-500 tracking-widest">Desired Handle</label>
+                    <input type="text" name="username" required placeholder="NEW_USER"
+                        class="cyber-input w-full p-4 rounded-lg text-white font-semibold">
+                </div>
+
+                <div class="space-y-2">
+                    <label class="block text-[10px] heading-font uppercase text-gray-500 tracking-widest">Secure Access Key</label>
+                    <input type="password" name="password" required placeholder="••••••••"
+                        class="cyber-input w-full p-4 rounded-lg text-white font-semibold">
+                </div>
+
+                <button type="submit" 
+                    class="w-full py-4 bg-white hover:bg-indigo-500 hover:text-white text-black heading-font text-sm font-black uppercase rounded-lg transition-all duration-300 tracking-[0.2em]">
+                    Create Profile
+                </button>
+            </form>
+
+            <div class="mt-6 text-center">
+                <a href="/login" class="text-xs text-gray-500 hover:text-white uppercase tracking-widest transition-colors">
+                    Back to Authorization
+                </a>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

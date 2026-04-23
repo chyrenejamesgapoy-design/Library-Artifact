@@ -1,0 +1,15 @@
+<h1>🧢 Trainer Profile</h1>
+
+<div class="center-box">
+    <p>Trainer: {{user}}</p>
+</div>
+
+<div class="card-grid">
+{% for i in items %}
+<div class="card">
+    <h3>{{i.name}}</h3>
+    <p>Lv {{i.level}}</p>
+    <p>{{i.rarity}}</p>
+</div>
+{% endfor %}
+</div>

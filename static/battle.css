@@ -1,0 +1,404 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+
+body {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    justify-content: center; /* Centers horizontally */
+    align-items: center;     /* Centers vertically */
+    overflow: hidden;        /* Prevents scrolling */
+    background: linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)), 
+                url('/static/images/arena_bg.jpg'); /* Your background */
+    background-size: cover;
+    background-position: center;
+}
+
+.arena-dashboard {
+    /* Fixed Dimensions to prevent stretching */
+    width: 400px; 
+    min-height: 500px;
+    
+    /* Layout Logic */
+    display: flex;
+    flex-direction: column;
+    padding: 40px;
+    border-radius: 32px;
+    position: relative;
+    z-index: 100; /* Ensure it stays above falling cards */
+    
+    /* Aesthetics */
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(25px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.8);
+}
+
+.rank-title {
+    font-size: 2.2rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    background: linear-gradient(to bottom, #fff, #94a3b8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: 3px;
+}
+
+.trophy-count {
+    color: #fbbf24;
+    font-size: 1.1rem;
+    margin-top: 10px;
+    font-weight: 700;
+}
+
+/* --- BATTLE CONTAINER & LIGHTNING --- */
+.battle-container {
+    position: relative;
+    height: 180px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 20px;
+    margin: 30px 0;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.legendary-border::after, .legendary-border::before {
+    content: "";
+    position: absolute;
+    top: -20%;
+    filter: url(#jaggedLightning);
+    opacity: 0;
+    background: #fff;
+    pointer-events: none;
+}
+
+.legendary-border::after {
+    width: 8px; height: 140%; left: -100%;
+    box-shadow: 0 0 20px #fff, 0 0 40px #38bdf8;
+    animation: realStrike 6s infinite;
+}
+
+@keyframes realStrike {
+    0% { left: -100%; opacity: 0; }
+    3% { opacity: 1; }
+    5% { opacity: 1; }
+    15% { left: 150%; opacity: 0; }
+    100% { left: 150%; opacity: 0; }
+}
+
+/* --- SEARCHING UI --- */
+.radar-scope {
+    width: 70px;
+    height: 70px;
+    border: 2px solid #38bdf8;
+    border-radius: 50%;
+    position: relative;
+    margin-bottom: 15px;
+    box-shadow: inset 0 0 15px rgba(56, 189, 248, 0.3);
+}
+
+.radar-scope::after {
+    content: "";
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 100%; height: 2px;
+    background: #38bdf8;
+    transform-origin: left;
+    animation: rotateRadar 2s linear infinite;
+}
+
+@keyframes rotateRadar {
+    from { transform: rotate(0deg) translate(-50%, -50%); }
+    to { transform: rotate(360deg) translate(-50%, -50%); }
+}
+
+.searching-text {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 11px;
+    color: #38bdf8;
+    animation: blink 1.5s infinite;
+}
+
+@keyframes blink { 50% { opacity: 0.4; } }
+
+/* --- BUTTONS --- */
+.btn-enter-arena {
+    width: 100%;
+    padding: 22px;
+    border-radius: 15px;
+    border: none;
+    background: #fff;
+    color: #000;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 900;
+    font-size: 1.1rem;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.btn-enter-arena:hover {
+    transform: scale(1.03);
+    background: #38bdf8;
+    box-shadow: 0 0 25px rgba(56, 189, 248, 0.5);
+}
+
+.back-link {
+    display: block;
+    margin-top: 20px;
+    color: rgba(255, 255, 255, 0.5);
+    text-decoration: none;
+    font-size: 0.8rem;
+}
+
+/* --- BACKGROUND MASTER (ARENA) --- */
+.card-rain-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    background: url('/static/images/arena_bg.jpg') no-repeat center center fixed;
+    background-size: cover;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+/* Dark Vignette Overlay */
+.card-rain-container::after {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: radial-gradient(circle, transparent 20%, rgba(0, 0, 0, 0.8) 100%);
+}
+
+/* --- ANIME CHARACTER PROJECTION --- */
+.character-projection {
+    position: absolute;
+    bottom: 0;
+    left: 5%;
+    width: 35vw;
+    opacity: 0.9;
+    filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.3));
+    animation: holoPuff 6s ease-in-out infinite;
+}
+
+.combatant-model {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.holo-scanline {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.1) 0px, rgba(0, 0, 0, 0.1) 1px, transparent 1px, transparent 2px);
+    opacity: 0.15;
+    animation: scanMove 4s linear infinite;
+}
+
+/* --- GOLD DIVINE CARDS --- */
+.divine-falling-card {
+    position: absolute;
+    width: 60px;
+    height: 90px;
+    background: linear-gradient(135deg, #000 0%, #1a1a1a 100%);
+    border: 1px solid #dcb20b;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+    top: -150px;
+    animation: godModeDescend 8s ease-in infinite;
+    overflow: hidden;
+}
+
+.card-glow {
+    position: absolute;
+    top: 0; left: -100%; width: 200%; height: 100%;
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.8) 50%, transparent 100%);
+    animation: divineGlint 3s linear infinite;
+    filter: blur(5px);
+}
+
+/* --- ANIMATIONS --- */
+@keyframes holoPuff {
+    0%, 100% { transform: scale(1); filter: brightness(1) drop-shadow(0 0 20px rgba(255, 215, 0, 0.3)); }
+    50% { transform: scale(1.03); filter: brightness(1.2) drop-shadow(0 0 30px rgba(255, 215, 0, 0.5)); }
+}
+
+@keyframes scanMove {
+    0% { background-position: 0px 0px; }
+    100% { background-position: 0px -100px; }
+}
+
+@keyframes godModeDescend {
+    0% { transform: translateY(0) rotate(-15deg) scale(0); opacity: 0; }
+    10% { opacity: 1; }
+    80% { opacity: 0.8; }
+    100% { transform: translateY(115vh) rotate(15deg) scale(1.1); opacity: 0; filter: blur(8px); }
+}
+
+@keyframes divineGlint {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+/* Container Wrapper */
+.mode-selection-wrapper {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    margin: 15px 0;
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 18px;
+}
+
+/* Individual Mode Cards */
+.mode-card {
+    flex: 1;
+    padding: 10px;
+    border-radius: 12px;
+    cursor: pointer;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(0, 0, 0, 0.3);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    text-align: center;
+}
+
+.mode-label {
+    font-size: 0.6rem;
+    font-weight: 900;
+    margin-top: 4px;
+    color: rgba(255, 255, 255, 0.4);
+}
+
+/* Active State Colors */
+.mode-card.active {
+    background: rgba(56, 189, 248, 0.15);
+    border-color: #06043f;
+    transform: scale(1.05);
+}
+
+.mode-card.active .mode-label { color: #38bdf8; }
+
+/* Ranked Special Highlight */
+.mode-card.ranked.active {
+    background: rgba(251, 191, 36, 0.1);
+    border-color: #fbbf24;
+    box-shadow: 0 0 15px rgba(251, 191, 36, 0.2);
+}
+
+.mode-card.ranked.active .mode-label { color: #fbbf24; }
+
+.trophy-status-dot {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 5px;
+    height: 5px;
+    background: #fbbf24;
+    border-radius: 50%;
+    box-shadow: 0 0 8px #fbbf24;
+    display: none;
+}
+
+.mode-card.ranked.active .trophy-status-dot { display: block; }
+
+/* This centers the box and stacks elements vertically */
+.arena-dashboard {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    max-width: 450px; /* Limits the width so it doesn't stretch like your screenshot */
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column; /* Stack elements vertically */
+    align-items: center;
+    padding: 40px;
+    border-radius: 40px;
+    text-align: center;
+}
+
+/* Base Glassmorphism structure */
+.glass {
+    background: rgba(11, 0, 0, 0.03);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+/* Ensure the button stays within the box */
+.btn-enter-arena {
+    width: 100%;
+    margin-top: 20px;
+    display: block;
+}
+
+/* Fix for the mode selection row */
+.mode-selection-wrapper {
+    display: flex;
+    flex-direction: row; /* Keep these horizontal inside the vertical box */
+    justify-content: center;
+    gap: 15px;
+    width: 100%;
+    margin: 20px 0;
+}
+
+@keyframes arenaGlow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.arena-background-animate {
+    background: linear-gradient(-45deg, #191931, #1a1a2e, #0a0a14, #050508);
+    background-size: 400% 400%;
+    animation: arenaGlow 15s ease infinite;
+}
+
+/* Center the Rank and Trophy text */
+.rank-display {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+/* Ensure the Mode Selector row doesn't break the column */
+.mode-selection-wrapper {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+/* Fix the Combat Status box size */
+.battle-container {
+    width: 100%;
+    height: 180px; /* Fixed height so the box doesn't jump */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    margin-bottom: 25px;
+}
+
+/* Make button full width of the container */
+.btn-enter-arena {
+    width: 100%;
+    padding: 20px;
+    border-radius: 16px;
+    font-weight: 900;
+    cursor: pointer;
+    transition: transform 0.2s, background 0.3s;
+}
